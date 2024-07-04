@@ -1,0 +1,39 @@
+---
+- name: Install and Start Service with Custom Port
+  hosts: 40.123.25.202
+  become: yes
+
+  tasks:
+    - name: Install the service (nginx)
+      yum:
+        name: nginx
+        state: present
+
+    - name: Ensure the service is enabled and started
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copy index.html to server root
+      copy:
+        src: index.html
+        dest: /usr/share/nginx/html/index.html
+
+    - name: Set custom port in nginx configuration
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^ *listen '
+        line: '    listen 8080;'
+
+    - name: Reload nginx to apply changes
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: Check if webpage is accessible via curl
+      uri:
+        url: "http://localhost:8080"
+        method: GET
+        status_code: 200
+      register: webpage_check
